@@ -1,0 +1,164 @@
+﻿Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+v.Local.sSOPad.Declare
+v.Local.sLinePad.Declare
+v.Local.sPassed.Declare
+v.Local.sSQL.Declare
+v.Local.sRet.Declare
+v.Local.iLine.Declare
+v.Local.i.Declare
+
+f.Intrinsic.Control.SelectCase(v.Caller.Hook)
+
+f.Intrinsic.Control.Case("12340")
+
+	f.Intrinsic.String.LPad(v.Passed.000060,"0",7,v.Local.sSOPad)
+	
+	f.Intrinsic.Control.If(v.Passed.000051,<,1000)
+		f.Intrinsic.String.LPad(v.Passed.000051,"0",3,v.Local.sLinePad)
+		f.Intrinsic.String.RPad(v.Local.sLinePad,"0",4,v.Local.sLinePad)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.String.Build("6466,{0},{1},{2}",v.Local.sSOPad,v.Local.sLinePad,v.Passed.000022,v.Local.sPassed)
+	f.Global.Registry.AddValue(v.Caller.User,v.Caller.CompanyCode,"6466","6466","1",false,v.Local.sPassed,false,0,0,v.Ambient.Date,v.Ambient.Time)
+
+f.Intrinsic.Control.Case("16630")
+	
+	f.Global.Registry.ReadValue(v.Caller.User,v.Caller.CompanyCode,"6466","6466",1,5,0,v.Local.sPassed)
+	
+	f.Intrinsic.String.Split(v.Local.sPassed,",",v.Local.sPassed)
+	
+	f.Intrinsic.Control.If(v.Local.sPassed,<>,"")
+
+		f.Intrinsic.Control.If(v.Local.sPassed(0),=,"6466")
+		
+			f.ODBC.Connection!conx.OpenCompanyConnection
+			
+			f.Intrinsic.String.Build("select x.QUOTE, x.USER_2, y.USER_4 from V_ORDER_HEADER as x left join V_ORDER_LINES as y on x.ORDER_NO = y.ORDER_NO and x.SHIP_ID = y.SHIP_ID where x.ORDER_NO = '{0}' and x.SHIP_ID = '{1}' and y.RECORD_NO = '{2}'",v.Local.sPassed(1),v.Local.sPassed(3),v.Local.sPassed(2),v.Local.sSQL)
+			f.ODBC.Connection!conx.ExecuteandReturn(v.Local.sSQL,v.Local.sRet)
+			
+			f.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+			
+			f.Intrinsic.String.Build("select * from WO_USER_FLDS where JOB = '{0}' and SUFFIX = '{1}'",v.Passed.000003,v.Passed.000004,v.Local.sSQL)
+			f.ODBC.Connection!conx.OpenLocalRecordsetRW("USER",v.Local.sSQL)
+			
+			f.Intrinsic.Control.If(v.ODBC.conx!USER.EOF,=,true)
+			
+				f.ODBC.conx!USER.AddNew
+				f.ODBC.conx!USER.Set!JOB(v.Passed.000003)
+				f.ODBC.conx!USER.Set!SUFFIX(v.Passed.000004)
+				
+			f.Intrinsic.Control.EndIf
+			
+				f.ODBC.conx!USER.Set!USER_1(v.Local.sRet(1))
+				f.ODBC.conx!USER.Set!USER_2(v.Local.sRet(0))
+				f.ODBC.conx!USER.Set!USER_3(v.Local.sRet(2))
+				f.ODBC.conx!USER.Update
+				
+			f.ODBC.conx!USER.Close
+			f.ODBC.Connection!conx.Close
+			
+			f.Global.Registry.AddValue(v.Caller.User,v.Caller.CompanyCode,"6466","6466","1",false,"",false,0,0,v.Ambient.Date,v.Ambient.Time)
+			
+		f.Intrinsic.Control.EndIf
+		
+	f.Intrinsic.Control.EndIf
+	
+f.Intrinsic.Control.Case("12230")
+
+	f.Global.Registry.ReadValue(v.Caller.User,v.Caller.CompanyCode,"6466","6466",1,5,0,v.Local.sPassed)
+	
+	f.Intrinsic.Control.If(v.Local.sPassed,<>,"")
+
+		'iF Added if the Registry doesn't exists 12/7/23 RRC
+		f.Intrinsic.Control.If(v.Local.sPassed(0),=,"6466")
+
+			f.Intrinsic.String.Split(v.Local.sPassed,",",v.Local.sPassed)
+			
+			f.Intrinsic.Control.If(v.Passed.000051,<,1000)
+				f.Intrinsic.String.Left(v.Local.sPassed(2),3,v.Local.sLinePad)
+			f.Intrinsic.Control.Else
+				v.Local.sLinePad.Set(v.Passed.000051)
+			f.Intrinsic.Control.EndIf
+			
+			v.Local.iLine.Set(v.Local.sLinePad)
+			
+			f.Intrinsic.Control.If(v.Passed.000051,=,v.Local.iLine)
+		
+				f.ODBC.Connection!conx.OpenCompanyConnection
+				
+				f.Intrinsic.Control.If(v.DataTable.dtJobs.Exists,=,true)
+					f.Data.DataTable.Close("dtJobs")
+				f.Intrinsic.Control.EndIf
+				f.Intrinsic.Control.If(v.DataTable.dtChild.Exists,=,true)
+					f.Data.DataTable.Close("dtChild")
+				f.Intrinsic.Control.EndIf
+				
+				f.Intrinsic.String.Build("select x.QUOTE, x.USER_2, y.USER_4 from V_ORDER_HEADER as x left join V_ORDER_LINES as y on x.ORDER_NO = y.ORDER_NO and x.SHIP_ID = y.SHIP_ID where x.ORDER_NO = '{0}' and x.SHIP_ID = '{1}' and y.RECORD_NO = '{2}'",v.Local.sPassed(1),v.Local.sPassed(3),v.Local.sPassed(2),v.Local.sSQL)
+				f.ODBC.Connection!conx.ExecuteandReturn(v.Local.sSQL,v.Local.sRet)
+				
+				f.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+			
+				f.Intrinsic.String.Build("select JOB, SUFFIX from V_JOB_HEADER where SALES_ORDER = '{0}' and SALES_ORDER_LINE = '{1}'",v.Local.sPassed(1),v.Local.sLinePad,v.Local.sSQL)
+				f.Data.DataTable.CreateFromSQL("dtJobs","conx",v.Local.sSQL,true)
+				
+				f.Intrinsic.String.Build("select JOB, SUFFIX from V_JOB_HEADER where PARENT_WO = '{0}'",v.DataTable.dtJobs(0).JOB!FieldValTrim,v.Local.sSQL)
+				f.Data.DataTable.CreateFromSQL("dtChild","conx",v.Local.sSQL,true)
+				
+				f.Data.DataTable.Merge("dtChild","dtJobs",true,2)
+				
+				f.Intrinsic.Control.If(v.DataTable.dtJobs.RowCount,>,0)
+				
+					f.Intrinsic.Control.For(v.Local.i,0,v.DataTable.dtJobs.RowCount--,1)
+					
+						f.Intrinsic.String.Build("select * from WO_USER_FLDS where JOB = '{0}' and SUFFIX = '{1}'",v.DataTable.dtJobs(v.Local.i).JOB!FieldValTrim,v.DataTable.dtJobs(v.Local.i).SUFFIX!FieldValTrim,v.Local.sSQL)
+						f.ODBC.Connection!conx.OpenLocalRecordsetRW("USER",v.Local.sSQL)
+						
+						f.Intrinsic.Control.If(v.ODBC.conx!USER.EOF,=,true)
+						
+							f.ODBC.conx!USER.AddNew
+							f.ODBC.conx!USER.Set!JOB(v.DataTable.dtJobs(v.Local.i).JOB!FieldValTrim)
+							f.ODBC.conx!USER.Set!SUFFIX(v.DataTable.dtJobs(v.Local.i).SUFFIX!FieldValTrim)
+							
+						f.Intrinsic.Control.EndIf
+						
+							f.ODBC.conx!USER.Set!USER_1(v.Local.sRet(1))
+							f.ODBC.conx!USER.Set!USER_2(v.Local.sRet(0))
+							f.ODBC.conx!USER.Set!USER_3(v.Local.sRet(2))
+							f.ODBC.conx!USER.Update
+							
+						f.ODBC.conx!USER.Close
+						
+					f.Intrinsic.Control.Next(v.Local.i)
+					
+				f.Intrinsic.Control.EndIf
+				
+				f.ODBC.Connection!conx.Close
+				f.Global.Registry.AddValue(v.Caller.User,v.Caller.CompanyCode,"6466","6466","1",false,"",false,0,0,v.Ambient.Date,v.Ambient.Time)
+				
+			f.Intrinsic.Control.EndIf
+		
+		f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Control.EndIf
+	
+f.Intrinsic.Control.EndSelect
+
+f.Intrinsic.Control.End
+
+f.Intrinsic.Control.Catch
+	f.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	f.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.End 
+f.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Comments.Start
+${$5$}$2.0.0.0$}$2
+${$6$}$rrodriguez$}$20231207090034091$}$YnvOFTUOxTrnxbSzMvfBmnrP7dtKqN6ZKEdpzIv886rKhm31A+ZfGuBRLAHPW2phTLxWaReecOAVs+lwPi/3/g==
+Program.Sub.Comments.End
